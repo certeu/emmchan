@@ -6,53 +6,12 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"unicode"
 )
 
 // Directory represents a channel directory tree.
 type Directory struct {
-	XMLName  xml.Name `xml:"directory"`
-	Channels Channels `xml:"channel"`
-}
-
-// Channels represents the channels slice.
-type Channels []*Channel
-
-func (c Channels) Len() int {
-	return len(c)
-}
-
-func (c Channels) Swap(i, j in) {
-	d[i], d[j] = d[j], d[i]
-}
-
-func (c Channels) Less(i, j int) bool {
-	iRunes := []rune(c[i])
-	jRunes := []rune(c[j])
-
-	max := len(iRunes)
-	if max > len(jRunes) {
-		max = len(jRunes)
-	}
-
-	for idx := 0; idx < max; idx++ {
-		ir := iRunes[idx]
-		jr := jRunes[idx]
-
-		lir := unicode.ToLower(ir)
-		ljr := unicode.ToLower(jr)
-
-		if lir != ljr {
-			return lir < ljr
-		}
-
-		// the lowercase runes are the same, so compare the original
-		if ir != jr {
-			return ir < jr
-		}
-	}
-
-	return false
+	XMLName  xml.Name   `xml:"directory"`
+	Channels []*Channel `xml:"channel"`
 }
 
 // Channel represents a channel entry.
