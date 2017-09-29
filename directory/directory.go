@@ -15,6 +15,32 @@ type Directory struct {
 	Channels []*Channel `xml:"channel"`
 }
 
+// Load will load a channel directory tree from a io.Reader.
+func (d *Directory) Load(ch io.Reader) error {
+	f, err := ioutil.ReadAll(ch)
+	if err != nil {
+		return err
+	}
+
+	err = xml.Unmarshal(f, &d)
+	if err != nil {
+		fmt.Printf("Error: %v", err)
+		return err
+	}
+
+	return nil
+}
+
+// Search looks up an URL in the Feeds slice of all channels.
+func (d *Directory) Search(url string) *Channel {
+	for _, ch := range d.Channels {
+		for _, feed := range ch.Feeds {
+			fmt.Printf("%v\n", feed.URL.Host)
+		}
+	}
+	return nil
+}
+
 // Channel represents a channel entry.
 type Channel struct {
 	ID              string `xml:"id,attr"`
@@ -72,20 +98,4 @@ func FromFile(path, name string) (*Directory, error) {
 		return d, err
 	}
 	return d, nil
-}
-
-// Load will load a channel directory tree from a io.Reader.
-func (d *Directory) Load(ch io.Reader) error {
-	f, err := ioutil.ReadAll(ch)
-	if err != nil {
-		return err
-	}
-
-	err = xml.Unmarshal(f, &d)
-	if err != nil {
-		fmt.Printf("Error: %v", err)
-		return err
-	}
-
-	return nil
 }
