@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/url"
 	"os"
 )
 
@@ -29,13 +30,32 @@ type Channel struct {
 	Language        string `xml:"language"`
 	UpdatePeriod    string `xml:"schedule>updatePeriod"`
 	UpdateFrequency int    `xml:"schedule>updateFrequency"`
-	Feed            []Feed `xml:"feed"`
+	Feeds           []Feed `xml:"feed"`
 }
 
 // Feed represents a channel feed.
 type Feed struct {
-	Title string `xml:"title,attr"`
-	URL   string `xml:"url,attr"`
+	Title string  `xml:"title,attr"`
+	URL   FeedURL `xml:"url,attr"`
+}
+
+func (f *Feed) EqualTo(other *Feed) bool {
+	this := f.URL
+	that := other.URL
+	return this.Host == that.Host && this.Path == that.Path
+}
+
+type FeedURL url.URL
+
+// UnmarshalXMLAttr unmarshals the URL string into FeedURL.
+// FeedURL is a url.URL.
+func (f *FeedURL) UnmarshalXMLAttr(attr xml.Attr) error {
+	u, err := url.Parse(attr.Value)
+	if err != nil {
+		return err
+	}
+	*f = FeedURL(*u)
+	return nil
 }
 
 // FromFile loads a channel directory from a XML file.
