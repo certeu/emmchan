@@ -6,6 +6,7 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -17,7 +18,8 @@ import (
 )
 
 var (
-	outFile = flag.String("o", "out.xml", "New channel directory file")
+	chDir   = flag.String("d", "", "Load channel directory file")
+	outFile = flag.String("o", "out.xml", "Write channel directory to file")
 )
 
 func getRSSFeed(feedURL string) (*rss.RSSFeed, error) {
@@ -27,7 +29,12 @@ func getRSSFeed(feedURL string) (*rss.RSSFeed, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		// Drain up to 512 bytes and close the body to let
+		// the Transport reuse the connection
+		io.CopyN(ioutil.Discard, resp.Body, 512)
+		resp.Body.Close()
+	}()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -46,16 +53,15 @@ func processChannel(inCh chan string, done <-chan bool, d *emm.Directory, wg *sy
 	for {
 		select {
 		case u := <-inCh:
-			log.Printf("Downloading %v\n", u)
-			rssFeed, _ := getRSSFeed(u)
+			//log.Printf("Downloading %v\n", u)
+			rssFeed, err := getRSSFeed(u)
+			if err != nil {
+				log.Printf("Error in %s: %s", u, err)
+				return
+			}
 			emmCh := emm.NewEMMChannel(rssFeed)
-
-			log.Printf("Adding to channel directory %v\n", u)
-			fmt.Printf("%#v\n", emmCh)
+			//log.Printf("Adding to channel directory %v\n", u)
 			d.Add(emmCh)
-			//if err := processURL(url, d); err != nil {
-			//	log.Printf("Error processing %s\n", url)
-			//}
 		case <-done:
 			// fmt.Printf("[%d] Processing done!\n", workerId)
 			return
@@ -65,14 +71,13 @@ func processChannel(inCh chan string, done <-chan bool, d *emm.Directory, wg *sy
 
 func main() {
 	startTime := time.Now()
-
 	flag.Parse()
-
-	if len(os.Args) < 2 {
-		fmt.Printf("Usage: %s [options] <channelsfile>\n", os.Args[0])
+	if *chDir == "" {
+		fmt.Printf("Could not load channel directory\n")
+		flag.Usage()
 		os.Exit(1)
 	}
-	d, err := emm.FromFile(os.Args[1], "Public")
+	d, err := emm.FromFile(*chDir, "Public")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -93,6 +98,9 @@ func main() {
 	for s.Scan() {
 		inCh <- s.Text()
 	}
+	if err := s.Err(); err != nil {
+		fmt.Fprintln(os.Stderr, "reading standard input:", err)
+	}
 
 	close(doneCh)
 	wg.Wait()
@@ -108,6 +116,6 @@ func main() {
 	}
 
 	elapsed := time.Since(startTime)
-	log.Printf("Processing took %s\n", elapsed)
+	log.Printf("Elapsed time: %s\n", elapsed)
 
 }
