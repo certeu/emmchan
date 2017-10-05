@@ -12,14 +12,37 @@ import (
 	"github.com/ics/emm/pkg/rss"
 )
 
-// Directory represents a channel directory tree.
-type Directory struct {
-	XMLName  xml.Name      `xml:"directory"`
-	Channels []*EMMChannel `xml:"channel"`
+type Channels []*EMMChannel
+
+// Index returns the index of first found channel with the given identifier(id).
+func (c *Channels) Index(id string) int {
+	for idx, ch := range *c {
+		if ch.Identifier == id {
+			return idx
+		}
+	}
+	return -1
 }
 
+// Directory represents a channel directory tree.
+type Directory struct {
+	XMLName  xml.Name `xml:"directory"`
+	Channels Channels `xml:"channel"`
+}
+
+// Add appends an EMMChannel to directory channel slice.
 func (d *Directory) Add(ec *EMMChannel) {
-	if d.Has(ec) {
+	idx := d.Channels.Index(ec.Identifier)
+	if idx != -1 {
+		feeds := d.Channels[idx].Feeds
+		if feeds == nil {
+			feeds = ec.Feeds
+		} else {
+			for _, f := range *ec.Feeds {
+				feeds.Add(f)
+			}
+		}
+		d.Channels[idx].Feeds = feeds
 		return
 	}
 	d.Channels = append(d.Channels, ec)
@@ -51,26 +74,23 @@ func (d *Directory) Dump(ch io.Writer) error {
 	return nil
 }
 
-// Has determines if an EMM channel is in the directory.
-func (d *Directory) Has(other *EMMChannel) bool {
-	for _, ch := range d.Channels {
-		if ch.Identifier == other.Identifier {
-			return true
-		}
-	}
-	return false
-}
-
+// NewEMMChannel creates a new EMM channel from a RSS feed.
 func NewEMMChannel(r *rss.RSSFeed) *EMMChannel {
 	rc := r.Channel
 	u, _ := url.Parse(rc.URL)
+	if rc.Link == "" {
+		rc.Link = fmt.Sprintf("%s://%s/", u.Scheme, u.Host)
+	}
+	feeds := Feeds{
+		Feed{rc.Title, FeedURL(*u)},
+	}
 	e := &EMMChannel{
 		RSSFeed:         r,
 		Format:          "rss",
 		Type:            "webnews",
 		Subject:         "eucert",
 		Description:     rc.Description,
-		Identifier:      fmt.Sprintf("%s://%s/", u.Scheme, u.Host),
+		Identifier:      rc.Link,
 		Encoding:        r.Encoding,
 		CountryCode:     "US",
 		Region:          "Global",
@@ -79,7 +99,7 @@ func NewEMMChannel(r *rss.RSSFeed) *EMMChannel {
 		Language:        rc.Language,
 		UpdatePeriod:    "daily",
 		UpdateFrequency: 4,
-		Feeds:           []Feed{{Title: rc.Title, URL: FeedURL(*u)}},
+		Feeds:           &feeds,
 	}
 	e.genID()
 	e.setEncoding()
@@ -90,22 +110,22 @@ func NewEMMChannel(r *rss.RSSFeed) *EMMChannel {
 // EMMChannel represents a channel entry.
 type EMMChannel struct {
 	// the RSS feed from which this channel was generared
-	RSSFeed         *rss.RSSFeed
-	ID              string `xml:"id,attr"`
-	Format          string `xml:"format"`
-	Type            string `xml:"type"`
-	Subject         string `xml:"subject"`
-	Description     string `xml:"description"`
-	Identifier      string `xml:"identifier"`
-	Encoding        string `xml:"encoding"`
-	CountryCode     string `xml:"country"`
-	Region          string `xml:"region"`
-	Category        string `xml:"category"`
-	Ranking         int    `xml:"ranking"`
-	Language        string `xml:"language"`
-	UpdatePeriod    string `xml:"schedule>updatePeriod"`
-	UpdateFrequency int    `xml:"schedule>updateFrequency"`
-	Feeds           []Feed `xml:"feed"`
+	RSSFeed         *rss.RSSFeed `xml:"-"`
+	ID              string       `xml:"id,attr"`
+	Format          string       `xml:"format"`
+	Type            string       `xml:"type"`
+	Subject         string       `xml:"subject"`
+	Description     string       `xml:"description"`
+	Identifier      string       `xml:"identifier"`
+	Encoding        string       `xml:"encoding"`
+	CountryCode     string       `xml:"country"`
+	Region          string       `xml:"region"`
+	Category        string       `xml:"category"`
+	Ranking         int          `xml:"ranking"`
+	Language        string       `xml:"language"`
+	UpdatePeriod    string       `xml:"schedule>updatePeriod"`
+	UpdateFrequency int          `xml:"schedule>updateFrequency"`
+	Feeds           *Feeds       `xml:"feed"`
 }
 
 func (e *EMMChannel) genID() {
@@ -121,6 +141,16 @@ func (e *EMMChannel) genID() {
 func (e *EMMChannel) setEncoding() {
 	if e.Encoding == "" {
 		e.Encoding = "UTF-8"
+	}
+}
+
+type Feeds []Feed
+
+func (f *Feeds) Add(other Feed) {
+	for _, feed := range *f {
+		if feed.URL != other.URL {
+			*f = append(*f, other)
+		}
 	}
 }
 
