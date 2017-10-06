@@ -10,11 +10,13 @@ const (
 	timeout   = 30 * time.Second
 )
 
+// A Client is used to fetch new feeds.
 type Client struct {
 	httpClient *http.Client
 	UserAgent  string
 }
 
+// NewClient returns a new EMM client.
 func NewClient(httpClient *http.Client) *Client {
 	if httpClient == nil {
 		httpClient = http.DefaultClient
@@ -29,6 +31,7 @@ func NewClient(httpClient *http.Client) *Client {
 	return c
 }
 
+// Get fetches a URL and returns the HTTP response.
 func (c *Client) Get(url string) (*http.Response, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {

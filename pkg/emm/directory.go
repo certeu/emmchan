@@ -12,7 +12,8 @@ import (
 	"github.com/ics/emm/pkg/rss"
 )
 
-type Channels []*EMMChannel
+// Channels hold all EMM channels.
+type Channels []*Channel
 
 // Index returns the index of first found channel with the given identifier(id).
 func (c *Channels) Index(id string) int {
@@ -30,8 +31,8 @@ type Directory struct {
 	Channels Channels `xml:"channel"`
 }
 
-// Add appends an EMMChannel to directory channel slice.
-func (d *Directory) Add(ec *EMMChannel) {
+// Add appends an Channel to directory channel slice.
+func (d *Directory) Add(ec *Channel) {
 	idx := d.Channels.Index(ec.Identifier)
 	if idx != -1 {
 		feeds := d.Channels[idx].Feeds
@@ -74,8 +75,8 @@ func (d *Directory) Dump(ch io.Writer) error {
 	return nil
 }
 
-// NewEMMChannel creates a new EMM channel from a RSS feed.
-func NewEMMChannel(r *rss.RSSFeed) *EMMChannel {
+// NewChannel creates a new EMM channel from a RSS feed.
+func NewChannel(r *rss.Feed) *Channel {
 	rc := r.Channel
 	u, _ := url.Parse(rc.URL)
 	if rc.Link == "" {
@@ -84,8 +85,8 @@ func NewEMMChannel(r *rss.RSSFeed) *EMMChannel {
 	feeds := Feeds{
 		Feed{rc.Title, FeedURL(*u)},
 	}
-	e := &EMMChannel{
-		RSSFeed:         r,
+	e := &Channel{
+		Feed:            r,
 		Format:          "rss",
 		Type:            "webnews",
 		Subject:         "eucert",
@@ -107,45 +108,47 @@ func NewEMMChannel(r *rss.RSSFeed) *EMMChannel {
 
 }
 
-// EMMChannel represents a channel entry.
-type EMMChannel struct {
+// Channel represents a channel entry.
+type Channel struct {
 	// the RSS feed from which this channel was generared
-	RSSFeed         *rss.RSSFeed `xml:"-"`
-	ID              string       `xml:"id,attr"`
-	Format          string       `xml:"format"`
-	Type            string       `xml:"type"`
-	Subject         string       `xml:"subject"`
-	Description     string       `xml:"description"`
-	Identifier      string       `xml:"identifier"`
-	Encoding        string       `xml:"encoding"`
-	CountryCode     string       `xml:"country"`
-	Region          string       `xml:"region"`
-	Category        string       `xml:"category"`
-	Ranking         int          `xml:"ranking"`
-	Language        string       `xml:"language"`
-	UpdatePeriod    string       `xml:"schedule>updatePeriod"`
-	UpdateFrequency int          `xml:"schedule>updateFrequency"`
-	Feeds           *Feeds       `xml:"feed"`
+	Feed            *rss.Feed `xml:"-"`
+	ID              string    `xml:"id,attr"`
+	Format          string    `xml:"format"`
+	Type            string    `xml:"type"`
+	Subject         string    `xml:"subject"`
+	Description     string    `xml:"description"`
+	Identifier      string    `xml:"identifier"`
+	Encoding        string    `xml:"encoding"`
+	CountryCode     string    `xml:"country"`
+	Region          string    `xml:"region"`
+	Category        string    `xml:"category"`
+	Ranking         int       `xml:"ranking"`
+	Language        string    `xml:"language"`
+	UpdatePeriod    string    `xml:"schedule>updatePeriod"`
+	UpdateFrequency int       `xml:"schedule>updateFrequency"`
+	Feeds           *Feeds    `xml:"feed"`
 }
 
-func (e *EMMChannel) genID() {
-	t := e.RSSFeed.Channel.Title
+func (e *Channel) genID() {
+	t := e.Feed.Channel.Title
 	if t == "" {
-		t = e.RSSFeed.Channel.URL
+		t = e.Feed.Channel.URL
 	}
 	alph, _ := regexp.Compile("[^a-zA-Z0-9]*")
 	title := alph.ReplaceAllString(t, "")
 	e.ID = title
 }
 
-func (e *EMMChannel) setEncoding() {
+func (e *Channel) setEncoding() {
 	if e.Encoding == "" {
 		e.Encoding = "UTF-8"
 	}
 }
 
+// Feeds reprents a collection of feeds within an EMM channel.
 type Feeds []Feed
 
+// Add appends a new Feed to the feed collections.
 func (f *Feeds) Add(other Feed) {
 	for _, feed := range *f {
 		if feed.URL != other.URL {
@@ -160,6 +163,7 @@ type Feed struct {
 	URL   FeedURL `xml:"url,attr"`
 }
 
+// FeedURL is the custom type for a feed URL.
 type FeedURL url.URL
 
 // UnmarshalXMLAttr unmarshals the URL string into FeedURL.
@@ -173,6 +177,7 @@ func (f *FeedURL) UnmarshalXMLAttr(attr xml.Attr) error {
 	return nil
 }
 
+// MarshalXMLAttr serializes a FeedURL.
 func (f *FeedURL) MarshalXMLAttr(name xml.Name) (xml.Attr, error) {
 	u := url.URL(*f)
 	attr := xml.Attr{Name: name, Value: u.String()}
