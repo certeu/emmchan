@@ -22,7 +22,7 @@ type Channel struct {
 	URL           string   `xml:"-"`
 	Title         string   `xml:"title"`
 	Link          string   `xml:"-"`
-	LinkSlice     []string `xml:"link"`
+	Links         []string `xml:"link"`
 	Description   string   `xml:"description"`
 	Language      string   `xml:"language"`
 	PubDate       string   `xml:"pubDate"`
@@ -44,13 +44,13 @@ type Item struct {
 // NewFeed creates a new Feed from a given byte slice and returns a
 // pointer to it.
 func NewFeed(buf []byte) (*Feed, error) {
-	f := RSSFeed{}
+	f := Feed{}
 	d := xml.NewDecoder(bytes.NewReader(buf))
 	d.CharsetReader = makeCharsetReader
 	if err := d.Decode(&f); err != nil {
 		return nil, err
 	}
-	for _, l := range f.Channel.LinkSlice {
+	for _, l := range f.Channel.Links {
 		if l != "" {
 			f.Channel.Link = l
 			break
