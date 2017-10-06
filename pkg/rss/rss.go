@@ -9,12 +9,15 @@ import (
 	"golang.org/x/text/encoding/charmap"
 )
 
-type RSSFeed struct {
-	XMLName  xml.Name    `xml:"rss"`
-	Encoding string      `xml:"encoding,attr"`
-	Channel  *RSSChannel `xml:"channel"`
+// Feed represents the RSS feed.
+type Feed struct {
+	XMLName  xml.Name `xml:"rss"`
+	Encoding string   `xml:"encoding,attr"`
+	Channel  *Channel `xml:"channel"`
 }
-type RSSChannel struct {
+
+// Channel represents a RSS channel within a feed.
+type Channel struct {
 	XMLName       xml.Name `xml:"channel"`
 	URL           string   `xml:"-"`
 	Title         string   `xml:"title"`
@@ -27,17 +30,20 @@ type RSSChannel struct {
 	Items         []Item
 }
 
+// Item represents a channel item
 type Item struct {
 	Title       string `xml:"title"`
 	Link        string `xml:"link"`
 	PubDate     string `xml:"pubDate"`
 	Creator     string `xml:"creator"`
-	Guid        string `xml:"guid"`
+	GUID        string `xml:"guid"`
 	Description string `xml:"description"`
 	Content     string `xml:"content"`
 }
 
-func NewRSSFeed(buf []byte) (*RSSFeed, error) {
+// NewFeed creates a new Feed from a given byte slice and returns a
+// pointer to it.
+func NewFeed(buf []byte) (*Feed, error) {
 	f := RSSFeed{}
 	d := xml.NewDecoder(bytes.NewReader(buf))
 	d.CharsetReader = makeCharsetReader
