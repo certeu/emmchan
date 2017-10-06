@@ -22,7 +22,7 @@ var (
 	outFile = flag.String("o", "out.xml", "Write channel directory to file")
 )
 
-func getRSSFeed(feedURL string) (*rss.RSSFeed, error) {
+func getFeed(feedURL string) (*rss.Feed, error) {
 	client := emm.NewClient(nil)
 
 	resp, err := client.Get(feedURL)
@@ -40,7 +40,7 @@ func getRSSFeed(feedURL string) (*rss.RSSFeed, error) {
 	if err != nil {
 		return nil, err
 	}
-	rssFeed, err := rss.NewRSSFeed(body)
+	rssFeed, err := rss.NewFeed(body)
 	if err != nil {
 		return nil, err
 	}
@@ -54,12 +54,13 @@ func processChannel(inCh chan string, done <-chan bool, d *emm.Directory, wg *sy
 		select {
 		case u := <-inCh:
 			//log.Printf("Downloading %v\n", u)
-			rssFeed, err := getRSSFeed(u)
+			rssFeed, err := getFeed(u)
+			fmt.Printf("%#v", rssFeed.Channel)
 			if err != nil {
 				log.Printf("Error in %s: %s", u, err)
 				return
 			}
-			emmCh := emm.NewEMMChannel(rssFeed)
+			emmCh := emm.NewChannel(rssFeed)
 			//log.Printf("Adding to channel directory %v\n", u)
 			d.Add(emmCh)
 		case <-done:
