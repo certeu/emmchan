@@ -1,5 +1,5 @@
 // The emm command reads URLS from STDIN and adds them to a channel directory.
-// It is unfortunate that EMM channels share the name with the Go primitive.
+// On EOF the channel directory is written to STDOUT.
 package main
 
 import (
@@ -18,8 +18,7 @@ import (
 )
 
 var (
-	chDir   = flag.String("d", "", "Load channel directory file")
-	outFile = flag.String("o", "out.xml", "Write channel directory to file")
+	chDir = flag.String("d", "", "Load channel directory file")
 )
 
 func getFeed(feedURL string) (*rss.Feed, error) {
@@ -55,10 +54,8 @@ func processChannel(inCh chan string, done <-chan bool, d *emm.Directory, wg *sy
 		case u := <-inCh:
 			//log.Printf("Downloading %v\n", u)
 			rssFeed, err := getFeed(u)
-			fmt.Printf("%#v", rssFeed.Channel)
 			if err != nil {
 				log.Printf("Error in %s: %s", u, err)
-				return
 			}
 			emmCh := emm.NewChannel(rssFeed)
 			//log.Printf("Adding to channel directory %v\n", u)
@@ -105,14 +102,8 @@ func main() {
 
 	close(doneCh)
 	wg.Wait()
-	log.Printf("All done! Writing new channel directory to %s...\n", *outFile)
 
-	f, err := os.OpenFile(*outFile, os.O_RDWR|os.O_CREATE, 0640)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if err := d.Dump(f); err != nil {
+	if err := d.Dump(os.Stdout); err != nil {
 		log.Fatal(err)
 	}
 
