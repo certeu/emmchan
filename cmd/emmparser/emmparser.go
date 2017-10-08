@@ -12,7 +12,6 @@ import (
 	"net/url"
 	"os"
 	"sync"
-	"time"
 
 	"github.com/ics/emm/pkg/emm"
 	"github.com/ics/emm/pkg/rss"
@@ -67,7 +66,6 @@ func processChannel(inCh chan string, done <-chan bool, d *emm.Directory, wg *sy
 }
 
 func main() {
-	startTime := time.Now()
 	flag.Parse()
 	if *chDir == "" {
 		fmt.Printf("Could not load channel directory\n")
@@ -118,8 +116,4 @@ func main() {
 	if err := d.Dump(os.Stdout); err != nil {
 		log.Fatal(err)
 	}
-
-	elapsed := time.Since(startTime)
-	log.Printf("Elapsed time: %s\n", elapsed)
-
 }
