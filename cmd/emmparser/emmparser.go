@@ -9,6 +9,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"net/url"
 	"os"
 	"sync"
 	"time"
@@ -52,16 +53,14 @@ func processChannel(inCh chan string, done <-chan bool, d *emm.Directory, wg *sy
 	for {
 		select {
 		case u := <-inCh:
-			//log.Printf("Downloading %v\n", u)
 			rssFeed, err := getFeed(u)
 			if err != nil {
 				log.Printf("Error in %s: %s", u, err)
+			} else {
+				emmCh := emm.NewChannel(rssFeed)
+				d.Add(emmCh)
 			}
-			emmCh := emm.NewChannel(rssFeed)
-			//log.Printf("Adding to channel directory %v\n", u)
-			d.Add(emmCh)
 		case <-done:
-			// fmt.Printf("[%d] Processing done!\n", workerId)
 			return
 		}
 	}
@@ -94,7 +93,20 @@ func main() {
 
 	s := bufio.NewScanner(os.Stdin)
 	for s.Scan() {
-		inCh <- s.Text()
+		if s.Text() == "" {
+			continue
+		}
+		u, err := url.Parse(s.Text())
+		if err != nil {
+			log.Printf("Could not parse URL: %s", err)
+		}
+		if u.Scheme == "" || u.Host == "" || u.Path == "" {
+			err = fmt.Errorf("Invalid URL %s", u)
+			log.Println(err)
+		}
+		if err == nil {
+			inCh <- fmt.Sprintf("%s", u)
+		}
 	}
 	if err := s.Err(); err != nil {
 		fmt.Fprintln(os.Stderr, "reading standard input:", err)
