@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"regexp"
+	"strings"
 
 	"github.com/ics/emm/pkg/rss"
 )
@@ -73,6 +74,12 @@ func (d *Directory) Dump(ch io.Writer) error {
 	}
 	ch.Write(out)
 	return nil
+}
+
+func NewDirectory(xmlstr string) *Directory {
+	d := &Directory{}
+	d.Load(strings.NewReader(xmlstr))
+	return d
 }
 
 // NewChannel creates a new EMM channel from a RSS feed.
