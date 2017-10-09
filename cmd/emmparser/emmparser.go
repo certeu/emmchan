@@ -68,6 +68,17 @@ func processChannel(inCh chan string, done <-chan bool, d *emm.Directory, wg *sy
 	}
 }
 
+func validInput(in string) error {
+	u, err := url.Parse(in)
+	if err != nil {
+		return fmt.Errorf("Could not parse URL: %s", err)
+	}
+	if u.Scheme == "" || u.Host == "" || u.Path == "" {
+		return fmt.Errorf("Invalid URL %s", u)
+	}
+	return nil
+}
+
 func main() {
 	flag.Parse()
 	if *version {
@@ -101,18 +112,11 @@ func main() {
 		if s.Text() == "" {
 			continue
 		}
-		u, err := url.Parse(s.Text())
-		if err != nil {
-			log.Printf("Could not parse URL: %s", err)
-		}
-		if u.Scheme == "" || u.Host == "" || u.Path == "" {
-			err = fmt.Errorf("Invalid URL %s", u)
-			log.Println(err)
-		}
-		if err == nil {
-			inCh <- fmt.Sprintf("%s", u)
+		if err := validInput(s.Text()); err == nil {
+			inCh <- s.Text()
 		}
 	}
+
 	if err := s.Err(); err != nil {
 		fmt.Fprintln(os.Stderr, "reading standard input:", err)
 	}
