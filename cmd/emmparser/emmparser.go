@@ -17,8 +17,11 @@ import (
 	"github.com/ics/emm/pkg/rss"
 )
 
+var buildInfo string
+
 var (
-	chDir = flag.String("d", "", "Load channel directory file")
+	chDir   = flag.String("d", "", "Channel directory file path")
+	version = flag.Bool("v", false, "Display version and exit")
 )
 
 func getFeed(feedURL string) (*rss.Feed, error) {
@@ -67,6 +70,10 @@ func processChannel(inCh chan string, done <-chan bool, d *emm.Directory, wg *sy
 
 func main() {
 	flag.Parse()
+	if *version {
+		fmt.Printf("Version: %s\n", buildInfo)
+		return
+	}
 	if *chDir == "" {
 		fmt.Printf("Could not load channel directory\n")
 		flag.Usage()
