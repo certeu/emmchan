@@ -93,6 +93,7 @@ func TestAdd(t *testing.T) {
 	d := newDirectory(cd)
 	c := NewChannel(rssFeed)
 	d.Add(c)
+	d.Add(c)
 	if len(d.Channels) != 2 {
 		t.Errorf("Channel wasn't properly added.")
 	}
