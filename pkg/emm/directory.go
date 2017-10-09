@@ -76,6 +76,7 @@ func (d *Directory) Dump(ch io.Writer) error {
 	return nil
 }
 
+// NewDirectory create a new channel directory from an XML string
 func NewDirectory(xmlstr string) *Directory {
 	d := &Directory{}
 	d.Load(strings.NewReader(xmlstr))
