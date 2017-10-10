@@ -93,12 +93,11 @@ func main() {
 	log.Printf("Loaded channel directory with %d channels", len(d.Channels))
 
 	var wg sync.WaitGroup
-	inCh := make(chan string)
-	numWorkers := 100
+	urls := make(chan string)
 
-	for i := 0; i < numWorkers; i++ {
+	for i := 0; i < 100; i++ {
 		wg.Add(1)
-		go processChannel(inCh, d, &wg)
+		go processChannel(urls, d, &wg)
 	}
 
 	s := bufio.NewScanner(os.Stdin)
@@ -107,7 +106,7 @@ func main() {
 			continue
 		}
 		if err := validInput(s.Text()); err == nil {
-			inCh <- s.Text()
+			urls <- s.Text()
 		}
 	}
 
@@ -115,7 +114,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, "reading standard input:", err)
 	}
 
-	close(inCh)
+	close(urls)
 	wg.Wait()
 
 	if err := d.Dump(os.Stdout); err != nil {
