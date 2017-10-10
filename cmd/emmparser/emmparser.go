@@ -50,20 +50,15 @@ func getFeed(feedURL string) (*rss.Feed, error) {
 	return rssFeed, nil
 }
 
-func processChannel(inCh chan string, done <-chan bool, d *emm.Directory, wg *sync.WaitGroup) {
+func processChannel(inCh chan string, d *emm.Directory, wg *sync.WaitGroup) {
 	defer wg.Done()
-	for {
-		select {
-		case u := <-inCh:
-			rssFeed, err := getFeed(u)
-			if err != nil {
-				log.Printf("Error in %s: %s", u, err)
-			} else {
-				emmCh := emm.NewChannel(rssFeed)
-				d.Add(emmCh)
-			}
-		case <-done:
-			return
+	for u := range inCh {
+		rssFeed, err := getFeed(u)
+		if err != nil {
+			log.Printf("Error in %s: %s", u, err)
+		} else {
+			emmCh := emm.NewChannel(rssFeed)
+			d.Add(emmCh)
 		}
 	}
 }
@@ -98,13 +93,12 @@ func main() {
 	log.Printf("Loaded channel directory with %d channels", len(d.Channels))
 
 	var wg sync.WaitGroup
-	doneCh := make(chan bool)
 	inCh := make(chan string)
 	numWorkers := 100
 
 	for i := 0; i < numWorkers; i++ {
 		wg.Add(1)
-		go processChannel(inCh, doneCh, d, &wg)
+		go processChannel(inCh, d, &wg)
 	}
 
 	s := bufio.NewScanner(os.Stdin)
@@ -121,7 +115,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, "reading standard input:", err)
 	}
 
-	close(doneCh)
+	close(inCh)
 	wg.Wait()
 
 	if err := d.Dump(os.Stdout); err != nil {
