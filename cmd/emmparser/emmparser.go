@@ -24,9 +24,7 @@ var (
 	version = flag.Bool("v", false, "Display version and exit")
 )
 
-func getFeed(feedURL string) (*rss.Feed, error) {
-	client := emm.NewClient(nil)
-
+func getFeed(feedURL string, client *emm.Client) (*rss.Feed, error) {
 	resp, err := client.Get(feedURL)
 	if err != nil {
 		return nil, err
@@ -50,10 +48,10 @@ func getFeed(feedURL string) (*rss.Feed, error) {
 	return rssFeed, nil
 }
 
-func processChannel(inCh chan string, d *emm.Directory, wg *sync.WaitGroup) {
+func processChannel(inCh chan string, c *emm.Client, d *emm.Directory, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for u := range inCh {
-		rssFeed, err := getFeed(u)
+		rssFeed, err := getFeed(u, c)
 		if err != nil {
 			log.Printf("Error in %s: %s", u, err)
 		} else {
@@ -94,10 +92,11 @@ func main() {
 
 	var wg sync.WaitGroup
 	urls := make(chan string)
+	client := emm.NewClient(nil)
 
 	for i := 0; i < 100; i++ {
 		wg.Add(1)
-		go processChannel(urls, d, &wg)
+		go processChannel(urls, client, d, &wg)
 	}
 
 	s := bufio.NewScanner(os.Stdin)
