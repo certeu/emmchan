@@ -9,6 +9,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"sync"
 
 	"github.com/ics/emm/pkg/rss"
 )
@@ -28,12 +29,15 @@ func (c *Channels) Index(id string) int {
 
 // Directory represents a channel directory tree.
 type Directory struct {
+	sync.Mutex
 	XMLName  xml.Name `xml:"directory"`
 	Channels Channels `xml:"channel"`
 }
 
 // Add appends an Channel to directory channel slice.
 func (d *Directory) Add(ec *Channel) {
+	d.Lock()
+	defer d.Unlock()
 	idx := d.Channels.Index(ec.Identifier)
 	if idx != -1 {
 		feeds := d.Channels[idx].Feeds
