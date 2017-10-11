@@ -13,8 +13,8 @@ import (
 	"os"
 	"sync"
 
-	"github.com/ics/emm/pkg/emm"
-	"github.com/ics/emm/pkg/rss"
+	"git.cert.europa.eu/alex/emmparser/pkg/emm"
+	"git.cert.europa.eu/alex/emmparser/pkg/rss"
 )
 
 var buildInfo string

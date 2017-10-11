@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ics/emm/pkg/rss"
+	"git.cert.europa.eu/alex/emmparser/pkg/rss"
 )
 
 const (
