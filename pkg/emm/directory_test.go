@@ -83,7 +83,7 @@ func TestIndex(t *testing.T) {
 }
 
 func TestNewChannel(t *testing.T) {
-	c := NewChannel(rssFeed)
+	c := NewChannel(rssFeed, "Public")
 	if c.ID != "ResearchBlog" && c.Identifier != "https://www.zscalaer.com/" {
 		t.Errorf("Could not create new channel")
 	}
@@ -91,7 +91,7 @@ func TestNewChannel(t *testing.T) {
 
 func TestAdd(t *testing.T) {
 	d := newDirectory(cd)
-	c := NewChannel(rssFeed)
+	c := NewChannel(rssFeed, d.Instance)
 	d.Add(c)
 	d.Add(c)
 	if len(d.Channels) != 2 {

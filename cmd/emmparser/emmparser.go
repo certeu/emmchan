@@ -21,6 +21,7 @@ var buildInfo string
 
 var (
 	chDir   = flag.String("d", "", "Channel directory file path")
+	private = flag.Bool("p", false, "Channel is for a private instance")
 	version = flag.Bool("v", false, "Display version and exit")
 )
 
@@ -55,7 +56,7 @@ func processChannel(inCh chan string, c *emm.Client, d *emm.Directory, wg *sync.
 		if err != nil {
 			log.Printf("Error in %s: %s", u, err)
 		} else {
-			emmCh := emm.NewChannel(rssFeed)
+			emmCh := emm.NewChannel(rssFeed, d.Instance)
 			d.Add(emmCh)
 		}
 	}
@@ -83,7 +84,13 @@ func main() {
 		flag.Usage()
 		os.Exit(1)
 	}
-	d, err := emm.FromFile(*chDir, "Public")
+
+	inst := "Public"
+	if *private {
+		inst = "Private"
+	}
+
+	d, err := emm.FromFile(*chDir, inst)
 	if err != nil {
 		log.Fatal(err)
 	}

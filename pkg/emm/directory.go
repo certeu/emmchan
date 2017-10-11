@@ -30,6 +30,8 @@ func (c *Channels) Index(id string) int {
 // Directory represents a channel directory tree.
 type Directory struct {
 	sync.Mutex
+	// Marks EMM instance
+	Instance string
 	XMLName  xml.Name `xml:"directory"`
 	Channels Channels `xml:"channel"`
 }
@@ -88,7 +90,10 @@ func NewDirectory(xmlstr string) *Directory {
 }
 
 // NewChannel creates a new EMM channel from a RSS feed.
-func NewChannel(r *rss.Feed) *Channel {
+func NewChannel(r *rss.Feed, inst string) *Channel {
+	if inst == "" {
+		inst = "Public"
+	}
 	rc := r.Channel
 	u, _ := url.Parse(rc.URL)
 	if rc.Link == "" {
@@ -114,7 +119,7 @@ func NewChannel(r *rss.Feed) *Channel {
 		UpdateFrequency: 4,
 		Feeds:           &feeds,
 	}
-	e.genID()
+	e.genID(inst)
 	e.setEncoding()
 	return e
 
@@ -141,13 +146,16 @@ type Channel struct {
 	Feeds           *Feeds    `xml:"feed"`
 }
 
-func (e *Channel) genID() {
+func (e *Channel) genID(inst string) {
 	t := e.Feed.Channel.Title
 	if t == "" {
 		t = e.Feed.Channel.URL
 	}
 	alph, _ := regexp.Compile("[^a-zA-Z0-9]*")
 	title := alph.ReplaceAllString(t, "")
+	if inst == "Private" {
+		title = fmt.Sprintf("P_%s", title)
+	}
 	e.ID = title
 }
 
@@ -197,8 +205,8 @@ func (f *FeedURL) MarshalXMLAttr(name xml.Name) (xml.Attr, error) {
 }
 
 // FromFile loads a channel directory from a XML file.
-func FromFile(path, name string) (*Directory, error) {
-	d := &Directory{}
+func FromFile(path, inst string) (*Directory, error) {
+	d := &Directory{Instance: inst}
 	f, err := os.Open(path)
 	if err != nil {
 		return d, err
