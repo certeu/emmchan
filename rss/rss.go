@@ -59,12 +59,6 @@ func NewFeed(buf []byte) (*Feed, error) {
 	return &f, nil
 }
 
-var charsets = map[string]string{
-	"ISO-8859-1":   "ISO-8859-1",
-	"Windows-1252": "Windows-1252",
-	"Windows-1255": "Windows-1255",
-}
-
 func makeCharsetReader(charset string, input io.Reader) (io.Reader, error) {
 	if charset == "ISO-8859-1" || charset == "Windows-1252" {
 		// Windows-1252 is a superset of ISO-8859-1, so should do here
