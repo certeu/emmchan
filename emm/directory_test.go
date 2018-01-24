@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"git.cert.europa.eu/alex/emmparser/pkg/rss"
+	"github.com/certeu/emmparser/rss"
 )
 
 const (
@@ -77,7 +77,7 @@ func TestIndex(t *testing.T) {
 	for _, test := range tests {
 		idx := d.Channels.Index(test.in)
 		if idx != test.want {
-			t.Errorf("Error search for %s in channel directory", test.in)
+			t.Errorf("Channels.Index(%q) = %d; want %d", test.in, idx, test.want)
 		}
 	}
 }
@@ -85,7 +85,7 @@ func TestIndex(t *testing.T) {
 func TestNewChannel(t *testing.T) {
 	c := NewChannel(rssFeed, "Public")
 	if c.ID != "ResearchBlog" && c.Identifier != "https://www.zscalaer.com/" {
-		t.Errorf("Could not create new channel")
+		t.Errorf("NewChannel() = %s; want ReserchBlog", c.ID)
 	}
 }
 

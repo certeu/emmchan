@@ -11,7 +11,7 @@ import (
 	"strings"
 	"sync"
 
-	"git.cert.europa.eu/alex/emmparser/pkg/rss"
+	"github.com/certeu/emmparser/rss"
 )
 
 // Channels hold all EMM channels.

@@ -40,7 +40,7 @@ func TestGet(t *testing.T) {
 
 	mux.HandleFunc("/feed", func(w http.ResponseWriter, r *http.Request) {
 		if m := "GET"; m != r.Method {
-			t.Errorf("Request method = %v, want %v", r.Method, m)
+			t.Errorf("Request method = %v; want %v", r.Method, m)
 		}
 		fmt.Fprint(w, `response body`)
 	})
@@ -54,6 +54,6 @@ func TestGet(t *testing.T) {
 	}
 
 	if string(actual) != "response body" {
-		t.Errorf("Response body = %v, want response body", string(actual))
+		t.Errorf("Response body = %v; want response body", string(actual))
 	}
 }
