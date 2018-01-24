@@ -11,7 +11,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/certeu/emmparser/rss"
+	"github.com/certeu/emmchan/rss"
 )
 
 // Channels hold all EMM channels.

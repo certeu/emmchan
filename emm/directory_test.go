@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/certeu/emmparser/rss"
+	"github.com/certeu/emmchan/rss"
 )
 
 const (

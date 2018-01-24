@@ -13,8 +13,8 @@ import (
 	"os"
 	"sync"
 
-	"github.com/certeu/emmparser/emm"
-	"github.com/certeu/emmparser/rss"
+	"github.com/certeu/emmchan/emm"
+	"github.com/certeu/emmchan/rss"
 )
 
 var buildInfo string
