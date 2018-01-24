@@ -1,0 +1,13 @@
+project_name: emmchan
+builds:
+  -
+    main: ./cmd/emmchan/emmchan.go
+    binary: emmchan
+    ldflags: -s -w -X main.buildInfo={{.Version}}
+    goos:
+      - openbsd
+      - freebsd
+      - darwin
+      - windows
+    goarch:
+      - amd64
