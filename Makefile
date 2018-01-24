@@ -3,7 +3,7 @@ GOCMD=go
 GOBUILD=$(GOCMD) build
 GOCLEAN=$(GOCMD) clean
 GOINSTALL=$(GOCMD) install
-GOTEST=$(GOCMD) test
+GOTEST=$(GOCMD) test -cover
 
 VERSION=`git log --pretty=format:'%ad-%h' --date=short | head -1`
 LDFLAGS := -ldflags "-s -w -X main.buildInfo=${VERSION}"
@@ -42,8 +42,8 @@ release:
 test:
 	${GOTEST} ./...
 
-coverage:
-	go test -v -coverprofile=coverage.out github.com/ics/emm/pkg/rss
+cover:
+	go test -v -coverprofile=coverage.out github.com/certeu/emmchan/emm
 	go tool cover -func=coverage.out
 	go tool cover -html=coverage.out
 
